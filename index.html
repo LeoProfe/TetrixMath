@@ -1,364 +1,343 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>TetriMath — Cálculo mental</title>
-    <style>
-        :root {
-            --bg: #121218;
-            --panel: #1c1c25;
-            --grid: #2a2a37;
-            --fall: #1e90ff;
-            --bad: #888b93;
-            --text: #eef0f4;
-            --accent: #59d66b;
-        }
-        html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; }
-        .wrap { max-width: 1100px; margin: 0 auto; padding: 12px; }
-        header { display: grid; gap: 8px; grid-template-columns: 1fr; margin-bottom: 10px; }
-        .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-        .card { background: var(--panel); border-radius: 16px; padding: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
-        .title { font-size: 1.4rem; font-weight: 700; letter-spacing: .3px; }
-
-        select, input[type="number"], input[type="text"], button {
-            background: #0e0e14; color: var(--text); border: 1px solid #2b2b38; border-radius: 12px; padding: 10px 12px; font-size: 1rem;
-        }
-        button { cursor: pointer; }
-        button.primary { background: #0f172a; border-color: #2b386b; }
-        button:disabled { opacity: .6; cursor: not-allowed; }
-
-        .layout { display: grid; grid-template-columns: 1fr 280px; gap: 12px; max-width: 650px; margin: 0 auto; }
-        @media (max-width: 900px){ .layout { grid-template-columns: 1fr; } }
-
-        .canvas-card { position: relative; display: grid; place-items: center; }
-        canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 12px; background: #0c0c12; }
-
-        .panel { position: sticky; top: 8px; align-self: start; }
-        .stat { display: flex; justify-content: space-between; margin: 6px 0; font-size: .98rem; }
-        .stat b { font-variant-numeric: tabular-nums; }
-        .next-card { text-align: center; font-size: 1.2rem; }
-        .next-op { font-size: 2.2rem; margin-top: 8px; font-weight: bold; }
-
-        .kbd { background: #0e1018; border: 1px solid #293047; padding: 2px 6px; border-radius: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: .9rem; }
-
-        .input-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-
-        .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #0e1018; border: 1px solid #2a2f44; padding: 10px 14px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.45); font-size: .95rem; display: none; }
-    </style>
+  <meta charset="utf-8" />
+  <title>TetriMath PRO</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #181928;
+      --panel: #232336;
+      --grid: #31314b;
+      --fall: #1e90ff;
+      --bad: #888b93;
+      --text: #eef0f4;
+      --accent: #59d66b;
+    }
+    html, body { height: 100%; margin: 0; background: var(--bg); color: var(--text); font-family: system-ui; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 12px; }
+    header { margin-bottom: 10px; }
+    .title { font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; }
+    .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; max-width: 820px; margin: 0 auto; }
+    @media (max-width: 900px){ .layout { grid-template-columns: 1fr; } }
+    .canvas-card { position: relative; display: grid; place-items: center; }
+    canvas { width: 360px; height: 648px; image-rendering: pixelated; border-radius: 16px; background: #101022; box-shadow: 0 6px 24px rgba(0,0,0,.45);}
+    .panel { position: sticky; top: 8px; align-self: start; }
+    .stat { display: flex; justify-content: space-between; margin: 6px 0; font-size: 1rem; }
+    .stat b { font-variant-numeric: tabular-nums; }
+    select, input[type="number"], input[type="text"], button {
+      background: #232336; color: var(--text); border: 1px solid #2b2b38; border-radius: 12px; padding: 10px 12px; font-size: 1rem;
+    }
+    button { cursor: pointer; }
+    button.primary { background: #2e386b; border-color: #2b386b; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .input-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 10px;}
+    .kbd { background: #232336; border: 1px solid #293047; padding: 2px 6px; border-radius: 6px; font-family: monospace; }
+    .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 16px; background: #232336; border: 1px solid #2a2f44; padding: 10px 14px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.45); font-size: .95rem; display: none; }
+  </style>
 </head>
 <body>
-    <div class="wrap">
-        <header class="card">
-            <div class="row">
-                <div class="title">TetriMath — Cálculo mental tipo Tetris</div>
-            </div>
-            <div class="row">
-                <label for="mode">Modo:</label>
-                <select id="mode" title="Elige operaciones">
-                    <option value="+">Sumas</option>
-                    <option value="-">Restas</option>
-                    <option value="*">Multiplicación</option>
-                    <option value="/">División exacta</option>
-                    <option value="mix" selected>Mixto</option>
-                </select>
-                <button id="startBtn" class="primary">Iniciar</button>
-                <button id="pauseBtn">Pausar</button>
-                <button id="resetBtn">Reiniciar</button>
-            </div>
-            <div class="row" style="font-size:.95rem;opacity:.9">
-                Escribe el <b>resultado</b> y presiona <span class="kbd">Enter</span> o el botón <b>Enviar</b> antes de que caiga.
-                Cada <b>10 aciertos</b> se limpian los bloques malos. La velocidad sube por nivel.
-            </div>
-        </header>
-
-        <div class="layout">
-            <div class="card canvas-card">
-                <canvas id="game" width="760" height="648" aria-label="Tablero de juego"></canvas>
-            </div>
-
-            <aside class="panel">
-                <div class="card stat-card" style="margin-bottom: 12px;">
-                    <div class="stat"><span>Modo</span><b id="statMode">—</b></div>
-                    <div class="stat"><span>Nivel</span><b id="statLevel">1</b></div>
-                    <div class="stat"><span>Puntaje</span><b id="statScore">0</b></div>
-                    <div class="stat"><span>Aciertos</span><b id="statCorrect">0</b></div>
-                    <div class="stat"><span>High Score</span><b id="statHigh">0</b></div>
-                </div>
-
-                <div class="card input-card">
-                    <div class="stat"><span>Operación</span><b id="statOp">—</b></div>
-                    <div class="input-row" style="margin-top:8px">
-                        <input id="answer" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="Tu respuesta…"/>
-                        <button id="sendBtn" class="primary">Enviar</button>
-                    </div>
-                </div>
-                <div class="card next-card" style="margin-top:12px; display: none;" id="nextCard">
-                    <span>Siguiente operación:</span>
-                    <div class="next-op" id="nextOp">—</div>
-                </div>
-                <div class="card" style="margin-top:12px; font-size:.9rem; opacity:.9">
-                    <b>Controles:</b><br/>
-                    <span class="kbd">←</span> <span class="kbd">→</span> Mover<br/>
-                    <span class="kbd">↓</span> Caída suave<br/>
-                    <span class="kbd">Espacio</span> Caída instantánea<br/>
-                    <span class="kbd">Enter</span> Enviar respuesta<br/>
-                    <span class="kbd">P</span> Pausa
-                </div>
-            </aside>
-        </div>
+<div class="wrap">
+  <header>
+    <div class="title">TetriMath PRO — Cálculo mental tipo Tetris</div>
+    <div style="margin:6px 0 18px 0;opacity:.95">
+      Escribe el <b>resultado</b> y presiona <span class="kbd">Enter</span> o el botón <b>Enviar</b> antes de que la pieza toque el fondo o se apile.<br>
+      <b>Controles:</b>
+      <span class="kbd">←</span> <span class="kbd">→</span> Mover,
+      <span class="kbd">↓</span> Caída suave,
+      <span class="kbd">Espacio</span> Caída instantánea
     </div>
-
-    <div class="toast" id="toast"></div>
+    <div>
+      <label for="mode">Modo:</label>
+      <select id="mode">
+        <option value="+">Sumas</option>
+        <option value="-">Restas</option>
+        <option value="*">Multiplicación</option>
+        <option value="/">División</option>
+        <option value="mix" selected>Mixto</option>
+      </select>
+      <button id="startBtn" class="primary">Iniciar</button>
+      <button id="pauseBtn">Pausar</button>
+      <button id="resetBtn">Reiniciar</button>
+    </div>
+  </header>
+  <div class="layout">
+    <div class="canvas-card">
+      <canvas id="game" width="360" height="648" aria-label="Tablero de juego"></canvas>
+    </div>
+    <aside class="panel">
+      <div class="stat"><span>Nivel</span><b id="statLevel">1</b></div>
+      <div class="stat"><span>Puntaje</span><b id="statScore">0</b></div>
+      <div class="stat"><span>Aciertos</span><b id="statCorrect">0</b></div>
+      <div class="stat"><span>High Score</span><b id="statHigh">0</b></div>
+      <div class="stat"><span>Operación</span><b id="statOp">—</b></div>
+      <div class="input-row">
+        <input id="answer" type="text" inputmode="numeric" pattern="[0-9-]*" placeholder="Respuesta…" autocomplete="off" />
+        <button id="sendBtn" class="primary">Enviar</button>
+      </div>
+      <div style="margin-top:14px">
+        <b>Siguiente operación:</b>
+        <div id="nextOp">—</div>
+      </div>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
 
 <script>
 (function(){
-    // ---------- Utilidades ----------
-    const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  // Configuración
+  const GRID_W = 10, GRID_H = 18, CELL = 36;
+  const START_INTERVAL = 800, MIN_INTERVAL = 120, LEVEL_STEP_MS = 60;
+  const LEVEL_EVERY = 8;
+  const SHAPES = [
+    // Tetrominos clásicas (I, O, T, L, J, S, Z)
+    [[1,1,1,1]], // I
+    [[1,1],[1,1]], // O
+    [[0,1,0],[1,1,1]], // T
+    [[1,0,0],[1,1,1]], // L
+    [[0,0,1],[1,1,1]], // J
+    [[0,1,1],[1,1,0]], // S
+    [[1,1,0],[0,1,1]], // Z
+  ];
+  const COLORS = ["#1e90ff","#f8c263","#e580a5","#78d46a","#a688fa","#ff6b6b","#59d66b"];
+  const OPS = ['+','-','*','/'];
 
-    // ---------- Configuración ----------
-    const GRID_W = 10, GRID_H = 18;
-    const CELL = 36;
-    const START_INTERVAL = 800, MIN_INTERVAL = 150, LEVEL_STEP_MS = 60;
-    const LEVEL_EVERY_CORRECT = 6, CLEAN_EVERY_CORRECT = 10;
-    const SOFT_DROP_SPEED = 50;
-    
-    const COLORS = {
-        bg: '#0c0c12', grid: '#2a2a37', fall: '#1e90ff', bad: '#888b93', text: '#eef0f4',
-        op: { '+': '#4c96d7', '-': '#e580a5', '*': '#78d46a', '/': '#f8c263' }
-    };
+  // Estado
+  let mode = 'mix', grid, score, high, correct, level, interval, gameOver, paused;
+  let falling, next, lastFall, isDropping;
+  let canvas = document.getElementById('game'), ctx = canvas.getContext('2d');
+  let statLevel = document.getElementById('statLevel');
+  let statScore = document.getElementById('statScore');
+  let statCorrect = document.getElementById('statCorrect');
+  let statHigh = document.getElementById('statHigh');
+  let statOp = document.getElementById('statOp');
+  let ansInput = document.getElementById('answer');
+  let sendBtn = document.getElementById('sendBtn');
+  let toast = document.getElementById('toast');
+  let nextOp = document.getElementById('nextOp');
 
-    // ---------- Estado ----------
-    let mode = 'mix';
-    let grid;
-    let score, high, correct, level, interval, gameOver;
-    let falling = null;
-    let next = null;
-    let lastFall = 0;
-    let paused = false;
-    let isDropping = false;
+  // Problemas
+  function makeProblem(opMode){
+    let op = opMode === 'mix' ? OPS[Math.floor(Math.random()*OPS.length)] : opMode;
+    let a,b,ans;
+    if(op==='+'){ a=rand(0,99); b=rand(0,99); ans=a+b; }
+    else if(op==='-'){ a=rand(0,99); b=rand(0,99); if(b>a){ [a,b]=[b,a]; } ans=a-b; }
+    else if(op==='*'){ a=rand(1,12); b=rand(1,12); ans=a*b; }
+    else{ b=rand(1,12); ans=rand(1,12); a=b*ans; }
+    return {a,b,op,ans};
+  }
+  function formatOp(p){
+    if(!p) return '—';
+    const sym = { '+': '+', '-': '−', '*': '×', '/': '÷' }[p.op];
+    return `${p.a}${sym}${p.b}`;
+  }
+  function rand(a,b){ return Math.floor(Math.random()*(b-a+1))+a; }
 
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const statMode = document.getElementById('statMode');
-    const statLevel = document.getElementById('statLevel');
-    const statScore = document.getElementById('statScore');
-    const statCorrect = document.getElementById('statCorrect');
-    const statHigh = document.getElementById('statHigh');
-    const statOp = document.getElementById('statOp');
-    const ansInput = document.getElementById('answer');
-    const sendBtn = document.getElementById('sendBtn');
-    const toast = document.getElementById('toast');
-    const nextCard = document.getElementById('nextCard');
-    const nextOp = document.getElementById('nextOp');
-
-    // ---------- Problemas ----------
-    function makeProblem(opMode){
-        let op = opMode === 'mix' ? ['+','-','*','/'][rnd(0,3)] : opMode;
-        let a,b,ans;
-        if(op === '+'){ a=rnd(0,99); b=rnd(0,99); ans=a+b; }
-        else if(op === '-'){
-            a=rnd(0,99); b=rnd(0,99); if(b>a){ const t=a; a=b; b=t; } ans=a-b;
-        } else if(op === '*'){ a=rnd(1,12); b=rnd(1,12); ans=a*b; }
-        else {
-            b=rnd(1,12); ans=rnd(1,12); a=b*ans;
+  // Pieza y lógica estilo Tetris
+  function makePiece(opMode){
+    let shapeId = rand(0,SHAPES.length-1);
+    let shape = SHAPES[shapeId].map(r=>[...r]);
+    let color = COLORS[shapeId];
+    let problem = makeProblem(opMode);
+    // Posición inicial: centrado arriba
+    let x = Math.floor((GRID_W-shape[0].length)/2), y = 0;
+    return {shape, color, x, y, ...problem, shapeId, rot:0};
+  }
+  function reset(){
+    grid = Array.from({length: GRID_H}, () => Array(GRID_W).fill(null));
+    score = 0; correct = 0; level = 1; interval = START_INTERVAL; gameOver = false; paused = false;
+    high = Number(localStorage.getItem('tetrimath_high')||'0')||0;
+    falling = makePiece(mode);
+    next = makePiece(mode);
+    lastFall = performance.now();
+    updateStats();
+    draw();
+  }
+  function updateStats(){
+    statLevel.textContent = level;
+    statScore.textContent = score;
+    statCorrect.textContent = correct;
+    statHigh.textContent = high;
+    statOp.textContent = formatOp(falling);
+    nextOp.textContent = formatOp(next);
+  }
+  function canMove(piece,x,y,shape){
+    shape = shape||piece.shape;
+    for(let r=0;r<shape.length;r++)
+      for(let c=0;c<shape[0].length;c++)
+        if(shape[r][c]){
+          let nx = x+c, ny = y+r;
+          if(nx<0 || nx>=GRID_W || ny>=GRID_H) return false;
+          if(ny>=0 && grid[ny][nx]) return false;
         }
-        return { a, b, op, ans, x: rnd(0, GRID_W-1), y: 0 };
-    }
-
-    // ---------- Lógica del juego ----------
-    function reset(){
-        grid = Array.from({length: GRID_H}, () => Array(GRID_W).fill(null));
-        score = 0; correct = 0; level = 1; interval = START_INTERVAL; gameOver = false; paused = false;
-        high = Number(localStorage.getItem('tetrimath_high')||'0')||0;
-        falling = makeProblem(mode);
-        next = makeProblem(mode);
-        lastFall = performance.now();
-        ansInput.value = '';
-        updateStats();
-        draw();
-    }
-
-    function updateStats(){
-        statMode.textContent = (mode==='mix'?'Mixto':({'+' : 'Sumas','-':'Restas','*':'Multiplicación','/':'División'}[mode]));
-        statLevel.textContent = level;
-        statScore.textContent = score;
-        statCorrect.textContent = correct;
-        statHigh.textContent = high;
-        statOp.textContent = formatOp(falling);
-        nextOp.textContent = formatOp(next);
-        nextCard.style.display = 'block';
-    }
-
-    function formatOp(p){ if(!p) return '—'; const sym = { '+': '+', '-': '−', '*': '×', '/': '÷' }[p.op]; return `${p.a}${sym}${p.b}`; }
-
-    function lockPiece(){
-        if(falling.y >= 0 && falling.y < GRID_H && falling.x >= 0 && falling.x < GRID_W){
-            grid[falling.y][falling.x] = { isBad: true, op: falling.op };
+    return true;
+  }
+  function placePiece(piece){
+    for(let r=0;r<piece.shape.length;r++)
+      for(let c=0;c<piece.shape[0].length;c++)
+        if(piece.shape[r][c]){
+          let nx = piece.x+c, ny = piece.y+r;
+          if(ny>=0 && ny<GRID_H && nx>=0 && nx<GRID_W)
+            grid[ny][nx]={color:piece.color, op:piece.op, value:piece.ans, display:formatOp(piece)};
         }
-        if(grid[0].some(b=>b?.isBad)) gameOver = true;
-        spawn();
+  }
+  function clearLines(){
+    let lines=0;
+    for(let y=GRID_H-1;y>=0;y--){
+      if(grid[y].every(cell=>cell)){
+        grid.splice(y,1);
+        grid.unshift(Array(GRID_W).fill(null));
+        lines++;
+        y++; // stay on same y after shift
+      }
     }
-
-    function spawn(){
-        falling = next;
-        falling.x = rnd(0, GRID_W-1); falling.y = 0;
-        next = makeProblem(mode);
-        lastFall = performance.now();
-        ansInput.value = '';
-        updateStats();
-        draw();
+    if(lines>0){
+      score += lines*100;
+      ping(`¡${lines} línea${lines>1?'s':''} eliminada${lines>1?'s':''}!`);
     }
-
-    function submit(){
-        if(gameOver || paused) return;
-        const val = parseInt(ansInput.value, 10);
-        if(Number.isNaN(val)) { ping('Ingresa un número'); return; }
-        if(val === falling.ans){
-            const base = 10, bonus = (level-1)*2; score += base + bonus; correct += 1;
-            if(correct % LEVEL_EVERY_CORRECT === 0){ level += 1; interval = Math.max(MIN_INTERVAL, interval - LEVEL_STEP_MS); }
-            if(correct % CLEAN_EVERY_CORRECT === 0){ clearAllBad(); ping('¡Limpieza total!'); }
-            if(score > high){ high = score; localStorage.setItem('tetrimath_high', String(high)); }
-            spawn();
-        } else {
-            lockPiece();
-            ping("¡Incorrecto!");
-        }
-        ansInput.value = '';
-        updateStats();
+  }
+  function spawn(){
+    falling = next;
+    next = makePiece(mode);
+    if(!canMove(falling,falling.x,falling.y)){ gameOver = true; ping("Fin del juego"); }
+    updateStats();
+    draw();
+  }
+  function submit(){
+    if(gameOver || paused) return;
+    const val = parseInt(ansInput.value, 10);
+    if(Number.isNaN(val)) { ping('Ingresa un número'); return; }
+    if(val === falling.ans){
+      score += 10+level*2;
+      correct++;
+      if(correct % LEVEL_EVERY===0){
+        level++; interval = Math.max(MIN_INTERVAL, interval-LEVEL_STEP_MS);
+      }
+      if(score > high){ high = score; localStorage.setItem('tetrimath_high', String(high)); }
+      // Elimina la pieza y genera la siguiente
+      spawn();
+    } else {
+      ping("Incorrecto");
     }
-
-    function movePiece(dx){
-        if(gameOver || paused) return;
-        const newX = falling.x + dx;
-        if(newX >= 0 && newX < GRID_W){ falling.x = newX; }
-        draw();
+    ansInput.value = '';
+    updateStats();
+  }
+  function move(dx){
+    if(gameOver || paused) return;
+    if(canMove(falling, falling.x+dx, falling.y)){
+      falling.x += dx;
+      draw();
     }
-
-    function softDrop(){
-        if(gameOver || paused) return;
-        const ny = falling.y + 1;
-        if(ny >= GRID_H || (grid[ny][falling.x]?.isBad)){ lockPiece(); }
-        else { falling.y = ny; lastFall = performance.now(); }
-        draw();
+  }
+  function dropOne(){
+    if(gameOver || paused) return;
+    if(canMove(falling, falling.x, falling.y+1)){
+      falling.y++;
+    } else {
+      placePiece(falling);
+      clearLines();
+      spawn();
+      return;
     }
-
-    function hardDrop(){
-        if(gameOver || paused) return;
-        let ny = falling.y;
-        while(ny+1 < GRID_H && !grid[ny+1][falling.x]?.isBad){ ny++; }
-        falling.y = ny;
-        lockPiece();
-        draw();
+    draw();
+  }
+  function hardDrop(){
+    if(gameOver || paused) return;
+    while(canMove(falling, falling.x, falling.y+1)) falling.y++;
+    placePiece(falling);
+    clearLines();
+    spawn();
+    draw();
+  }
+  function rotate(){
+    if(gameOver || paused) return;
+    let newShape = falling.shape[0].map((_,i)=>falling.shape.map(row=>row[i]).reverse());
+    if(canMove(falling, falling.x, falling.y, newShape)){
+      falling.shape = newShape;
+      falling.rot = (falling.rot+1)%4;
+      draw();
     }
-
-    function clearAllBad(){
-        for(let y=0;y<GRID_H;y++) for(let x=0;x<GRID_W;x++) grid[y][x]=null;
+  }
+  function tick(now){
+    if(!paused && !gameOver){
+      const currentInterval = isDropping ? 60 : interval;
+      if(now-lastFall >= currentInterval){
+        dropOne();
+        lastFall = now;
+      }
     }
-
-    function tick(now){
-        if(!paused && !gameOver){
-            const currentInterval = isDropping ? SOFT_DROP_SPEED : interval;
-            if(now - lastFall >= currentInterval){
-                const ny = falling.y + 1;
-                if(ny >= GRID_H || (grid[ny][falling.x]?.isBad)){ lockPiece(); }
-                else { falling.y = ny; lastFall = now; }
-            }
-        }
-        draw();
-        requestAnimationFrame(tick);
-    }
-
-    // ---------- Dibujo ----------
-    function draw(){
-        const W = canvas.width, H = canvas.height;
-        ctx.clearRect(0,0,W,H);
-
-        const boardX = 12, boardY = 12, boardW = GRID_W*CELL, boardH = GRID_H*CELL;
-
-        ctx.fillStyle = COLORS.bg; ctx.fillRect(boardX, boardY, boardW, boardH);
-
-        ctx.strokeStyle = COLORS.grid; ctx.lineWidth = 1;
-        for(let y=0;y<=GRID_H;y++){
-            const yy = boardY + y*CELL; ctx.beginPath(); ctx.moveTo(boardX, yy); ctx.lineTo(boardX+boardW, yy); ctx.stroke();
-        }
-        for(let x=0;x<=GRID_W;x++){
-            const xx = boardX + x*CELL; ctx.beginPath(); ctx.moveTo(xx, boardY); ctx.lineTo(xx, boardY+boardH); ctx.stroke();
-        }
-
-        for(let y=0;y<GRID_H;y++){
-            for(let x=0;x<GRID_W;x++){
-                if(grid[y][x]?.isBad){
-                    ctx.fillStyle = COLORS.op[grid[y][x].op] || COLORS.bad;
-                    const rx = boardX + x*CELL + 1, ry = boardY + y*CELL + 1;
-                    ctx.fillRect(rx, ry, CELL-2, CELL-2);
-                    ctx.fillStyle = COLORS.text; ctx.font = '20px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(formatOp(grid[y][x]), rx + (CELL-2)/2, ry + (CELL-2)/2);
-                }
-            }
-        }
-
-        if(falling){
-            ctx.fillStyle = COLORS.fall;
-            const rx = boardX + falling.x*CELL + 1, ry = boardY + falling.y*CELL + 1;
-            ctx.fillRect(rx, ry, CELL-2, CELL-2);
-            ctx.fillStyle = COLORS.text; ctx.font = '20px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(formatOp(falling), rx + (CELL-2)/2, ry + (CELL-2)/2);
-        }
-
-        if(gameOver){
-            ctx.fillStyle = 'rgba(12,12,18,.7)'; ctx.fillRect(boardX, boardY, boardW, boardH);
-            ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 42px system-ui, sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText('FIN DEL JUEGO', boardX + boardW/2, boardY + boardH/2 - 16);
-            ctx.fillStyle = COLORS.text; ctx.font = '20px system-ui, sans-serif';
-            ctx.fillText('Pulsa Reiniciar para jugar otra vez', boardX + boardW/2, boardY + boardH/2 + 20);
-        }
-    }
-
-    // ---------- UI y Eventos ----------
-    function ping(msg){
-        toast.textContent = msg; toast.style.display = 'block';
-        clearTimeout(ping._t); ping._t = setTimeout(()=> toast.style.display='none', 1400);
-    }
-
-    function resizeCanvas(){
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
-        canvas.width = 12 + GRID_W*CELL + 12;
-        canvas.height = 12 + GRID_H*CELL + 12;
-        canvas.style.width = '100%';
-        canvas.style.height = 'auto';
-        const w = canvas.width, h = canvas.height;
-        canvas.width = Math.floor(w * ratio);
-        canvas.height = Math.floor(h * ratio);
-        ctx.setTransform(ratio, 0, 0, 0, 0, 0);
-        draw();
-    }
-
-    document.getElementById('mode').addEventListener('change', e=>{ mode = e.target.value; statMode.textContent = e.target.options[e.target.selectedIndex].text; });
-    document.getElementById('startBtn').addEventListener('click', ()=>{ reset(); ansInput.focus(); });
-    document.getElementById('pauseBtn').addEventListener('click', ()=>{ if(!gameOver){ paused = !paused; ping(paused? 'Pausa' : 'Reanudar'); ansInput.focus(); }});
-    document.getElementById('resetBtn').addEventListener('click', ()=>{ reset(); ansInput.focus(); });
-    sendBtn.addEventListener('click', submit);
-    ansInput.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter'){ ev.preventDefault(); submit(); } });
-    
-    window.addEventListener('keydown', (ev)=>{
-        if(ev.key.toLowerCase() === 'p'){ if(!gameOver){ paused = !paused; ping(paused? 'Pausa' : 'Reanudar'); } }
-        if(gameOver || paused) return;
-        if(ev.key === 'ArrowLeft'){ movePiece(-1); }
-        else if(ev.key === 'ArrowRight'){ movePiece(1); }
-        else if(ev.key === 'ArrowDown'){ isDropping = true; }
-        else if(ev.key === ' '){ hardDrop(); }
-    });
-    window.addEventListener('keyup', (ev)=>{
-        if(ev.key === 'ArrowDown'){ isDropping = false; }
-    });
-
-    window.addEventListener('resize', resizeCanvas);
-
-    resizeCanvas();
-    reset();
     requestAnimationFrame(tick);
+  }
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // Draw grid
+    for(let y=0;y<GRID_H;y++)
+      for(let x=0;x<GRID_W;x++){
+        ctx.strokeStyle="#22233a";
+        ctx.strokeRect(x*CELL,y*CELL,CELL,CELL);
+        if(grid[y][x]){
+          ctx.fillStyle = grid[y][x].color;
+          ctx.fillRect(x*CELL+2,y*CELL+2,CELL-4,CELL-4);
+          ctx.fillStyle="#fff";
+          ctx.font="bold 17px system-ui";
+          ctx.textAlign="center";
+          ctx.textBaseline="middle";
+          ctx.fillText(grid[y][x].display,x*CELL+CELL/2,y*CELL+CELL/2);
+        }
+      }
+    // Draw falling piece
+    if(falling){
+      ctx.globalAlpha=0.95;
+      for(let r=0;r<falling.shape.length;r++)
+        for(let c=0;c<falling.shape[0].length;c++)
+          if(falling.shape[r][c]){
+            let nx = falling.x+c, ny = falling.y+r;
+            if(ny>=0){
+              ctx.fillStyle=falling.color;
+              ctx.fillRect(nx*CELL+2,ny*CELL+2,CELL-4,CELL-4);
+              ctx.fillStyle="#fff";
+              ctx.font="bold 17px system-ui";
+              ctx.textAlign="center";
+              ctx.textBaseline="middle";
+              ctx.fillText(formatOp(falling),nx*CELL+CELL/2,ny*CELL+CELL/2);
+            }
+          }
+      ctx.globalAlpha=1;
+    }
+    // Game over
+    if(gameOver){
+      ctx.fillStyle = "rgba(20,20,28,.83)";
+      ctx.fillRect(0,canvas.height/2-60,canvas.width,120);
+      ctx.fillStyle="#ff6b6b"; ctx.font="bold 38px system-ui"; ctx.textAlign="center";
+      ctx.fillText("FIN DEL JUEGO",canvas.width/2,canvas.height/2-10);
+      ctx.fillStyle="#fff"; ctx.font="20px system-ui";
+      ctx.fillText("Pulsa Reiniciar para jugar otra vez",canvas.width/2,canvas.height/2+30);
+    }
+  }
+  function ping(msg){
+    toast.textContent = msg; toast.style.display='block';
+    clearTimeout(ping._t); ping._t=setTimeout(()=> toast.style.display='none',1800);
+  }
+  // UI
+  document.getElementById('mode').addEventListener('change', e=>{ mode=e.target.value; });
+  document.getElementById('startBtn').addEventListener('click', ()=>{ reset(); ansInput.focus(); });
+  document.getElementById('pauseBtn').addEventListener('click', ()=>{ if(!gameOver){ paused=!paused; ping(paused?"Pausa":"Reanudar"); ansInput.focus(); } });
+  document.getElementById('resetBtn').addEventListener('click', ()=>{ reset(); ansInput.focus(); });
+  sendBtn.addEventListener('click', submit);
+  ansInput.addEventListener('keydown', ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); submit(); } });
+  window.addEventListener('keydown', ev=>{
+    if(ev.key.toLowerCase()==='p'){ if(!gameOver){ paused=!paused; ping(paused?"Pausa":"Reanudar"); } }
+    if(gameOver || paused) return;
+    if(ev.key==='ArrowLeft'){ move(-1); }
+    else if(ev.key==='ArrowRight'){ move(1); }
+    else if(ev.key==='ArrowDown'){ isDropping=true; }
+    else if(ev.key===' '){ hardDrop(); }
+    else if(ev.key==='ArrowUp'){ rotate(); }
+  });
+  window.addEventListener('keyup', ev=>{ if(ev.key==='ArrowDown'){ isDropping=false; } });
+  reset();
+  requestAnimationFrame(tick);
 })();
 </script>
 </body>
